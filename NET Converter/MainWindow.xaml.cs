@@ -62,7 +62,7 @@ public partial class MainWindow : Window
                 {
                     NETVersionText.Text = sourceFramework;
                     NETVersionText.Background = Brushes.White;
-                    TargetFrameworkCombo.ItemsSource = Project.GetAvailableNETTargetVersions();
+                    TargetFrameworkCombo.ItemsSource = NETHelper.GetAvailableNETTargetVersions();
                     TargetFrameworkCombo.SelectedIndex = 0;
                     TargetFrameworkCombo.IsEnabled = true;
                 }
@@ -90,7 +90,7 @@ public partial class MainWindow : Window
         {
             if (TargetFrameworkCombo.SelectedItem is string targetVersionString)
             {
-                var targetVersion = Project.ParseTargetVersion(targetVersionString);
+                var targetVersion = NETHelper.ParseTargetVersion(targetVersionString);
                 var appendix = AppendixCombo.SelectedItem as string ?? throw new Exception("No valid appendix selected.");
                 await Project.MigrateProjectAsync(targetVersion, appendix);
                 MessageBox.Show("Project migration completed successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);

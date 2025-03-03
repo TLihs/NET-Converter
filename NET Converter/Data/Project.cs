@@ -2,47 +2,21 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Xml.Linq;
+using static NET_Converter.Data.NETHelper;
 
 namespace NET_Converter.Data
 {
-    public static class Project
+    internal static class Project
     {
-        public enum NETTargetVersions
-        {
-            NET50,
-            NET60,
-            NET70,
-            NET80,
-            NET90
-        }
-
-        public enum NETSourceVersions
-        {
-            NETFramework45,
-            NETFramework451,
-            NETFramework452,
-            NETFramework46,
-            NETFramework461,
-            NETFramework462,
-            NETFramework47,
-            NETFramework471,
-            NETFramework472,
-            NETFramework48,
-            NETCoreApp20,
-            NETCoreApp21,
-            NETCoreApp22,
-            NETCoreApp30,
-            NETCoreApp31,
-            NETCoreApp50,
-            NETCoreApp60
-        }
 
         private static string _projectPath;
         private static NETSourceVersions? _sourceFramework;
         private static XDocument _csproj;
 
-        public static string ProjectPath
+        internal static string ProjectPath
         {
             get => _projectPath;
             set
@@ -53,7 +27,7 @@ namespace NET_Converter.Data
             }
         }
 
-        public static NETSourceVersions? SourceFramework => _sourceFramework;
+        internal static NETSourceVersions? SourceFramework => _sourceFramework;
 
         static Project()
         {
@@ -62,7 +36,7 @@ namespace NET_Converter.Data
             _csproj = new XDocument();
         }
 
-        public static async Task<string> AnalyzeProjectAsync(string projectPath)
+        internal static async Task<string> AnalyzeProjectAsync(string projectPath)
         {
             if (string.IsNullOrEmpty(projectPath) || !File.Exists(projectPath))
                 throw new ArgumentException("Invalid project path.");
@@ -101,100 +75,7 @@ namespace NET_Converter.Data
             });
         }
 
-        public static string[] GetAvailableNETTargetVersions()
-        {
-            return
-            [
-                ".NET 5.0",
-                    ".NET 6.0",
-                    ".NET 7.0",
-                    ".NET 8.0",
-                    ".NET 9.0"
-            ];
-        }
-
-        public static NETSourceVersions ParseSourceVersion(string versionString)
-        {
-            return versionString switch
-            {
-                "v4.5" => NETSourceVersions.NETFramework45,
-                "v4.5.1" => NETSourceVersions.NETFramework451,
-                "v4.5.2" => NETSourceVersions.NETFramework452,
-                "v4.6" => NETSourceVersions.NETFramework46,
-                "v4.6.1" => NETSourceVersions.NETFramework461,
-                "v4.6.2" => NETSourceVersions.NETFramework462,
-                "v4.7" => NETSourceVersions.NETFramework47,
-                "v4.7.1" => NETSourceVersions.NETFramework471,
-                "v4.7.2" => NETSourceVersions.NETFramework472,
-                "v4.8" => NETSourceVersions.NETFramework48,
-                "netcoreapp2.0" => NETSourceVersions.NETCoreApp20,
-                "netcoreapp2.1" => NETSourceVersions.NETCoreApp21,
-                "netcoreapp2.2" => NETSourceVersions.NETCoreApp22,
-                "netcoreapp3.0" => NETSourceVersions.NETCoreApp30,
-                "netcoreapp3.1" => NETSourceVersions.NETCoreApp31,
-                "net5.0" => NETSourceVersions.NETCoreApp50,
-                "net6.0" => NETSourceVersions.NETCoreApp60,
-                _ => throw new ArgumentException("Invalid source version.")
-            };
-        }
-
-        public static string SourceVersionToString(NETSourceVersions version)
-        {
-            return version switch
-            {
-                NETSourceVersions.NETFramework45 => "v4.5",
-                NETSourceVersions.NETFramework451 => "v4.5.1",
-                NETSourceVersions.NETFramework452 => "v4.5.2",
-                NETSourceVersions.NETFramework46 => "v4.6",
-                NETSourceVersions.NETFramework461 => "v4.6.1",
-                NETSourceVersions.NETFramework462 => "v4.6.2",
-                NETSourceVersions.NETFramework47 => "v4.7",
-                NETSourceVersions.NETFramework471 => "v4.7.1",
-                NETSourceVersions.NETFramework472 => "v4.7.2",
-                NETSourceVersions.NETFramework48 => "v4.8",
-                NETSourceVersions.NETCoreApp20 => "netcoreapp2.0",
-                NETSourceVersions.NETCoreApp21 => "netcoreapp2.1",
-                NETSourceVersions.NETCoreApp22 => "netcoreapp2.2",
-                NETSourceVersions.NETCoreApp30 => "netcoreapp3.0",
-                NETSourceVersions.NETCoreApp31 => "netcoreapp3.1",
-                NETSourceVersions.NETCoreApp50 => "net5.0",
-                NETSourceVersions.NETCoreApp60 => "net6.0",
-                _ => throw new ArgumentException("Invalid source version.")
-            };
-        }
-
-        public static NETTargetVersions ParseTargetVersion(string versionString)
-        {
-            // Strip any appendices like "-windows"
-            var baseVersion = versionString.Split('-')[0];
-
-            return baseVersion switch
-            {
-                "net5.0" => NETTargetVersions.NET50,
-                "net6.0" => NETTargetVersions.NET60,
-                "net7.0" => NETTargetVersions.NET70,
-                "net8.0" => NETTargetVersions.NET80,
-                "net9.0" => NETTargetVersions.NET90,
-                _ => throw new ArgumentException("Invalid target version.")
-            };
-        }
-
-        public static string TargetVersionToString(NETTargetVersions version, string appendix = "")
-        {
-            var baseVersion = version switch
-            {
-                NETTargetVersions.NET50 => "net5.0",
-                NETTargetVersions.NET60 => "net6.0",
-                NETTargetVersions.NET70 => "net7.0",
-                NETTargetVersions.NET80 => "net8.0",
-                NETTargetVersions.NET90 => "net9.0",
-                _ => throw new ArgumentException("Invalid target version.")
-            };
-
-            return string.IsNullOrEmpty(appendix) ? baseVersion : $"{baseVersion}-{appendix}";
-        }
-
-        public static async Task MigrateProjectAsync(NETTargetVersions targetVersion, string appendix = "")
+        internal static async Task MigrateProjectAsync(NETTargetVersions targetVersion, string appendix = "")
         {
             if (string.IsNullOrEmpty(_projectPath) || !File.Exists(_projectPath))
                 throw new ArgumentException("Invalid project path.");
@@ -220,32 +101,31 @@ namespace NET_Converter.Data
                 {
                     _csproj ??= XDocument.Load(_projectPath);
 
-                    var targetFrameworkElement = _csproj.Root?.Descendants(ns + "TargetFramework").FirstOrDefault();
+                    if (_csproj.Root == null)
+                        throw new InvalidOperationException("Invalid project file.");
+
+                    // Add SDK attribute
+                    _csproj.Root.SetAttributeValue("Sdk", "Microsoft.NET.Sdk");
+
+                    // Remove unnecessary elements
+                    _csproj.Root.Elements(ns + "PropertyGroup")
+                        .Elements(ns + "TargetFrameworkVersion")
+                        .Remove();
+                    _csproj.Root.Elements(ns + "PropertyGroup")
+                        .Elements(ns + "TargetFrameworks")
+                        .Remove();
+
+                    // Set TargetFramework
+                    var targetFrameworkElement = _csproj.Root.Elements(ns + "PropertyGroup")
+                        .Elements(ns + "TargetFramework")
+                        .FirstOrDefault();
                     if (targetFrameworkElement != null)
                     {
                         targetFrameworkElement.Value = TargetVersionToString(targetVersion, appendix);
                     }
                     else
                     {
-                        var targetFrameworkVersionElement = _csproj.Root?.Descendants(ns + "TargetFrameworkVersion").FirstOrDefault();
-                        if (targetFrameworkVersionElement != null)
-                        {
-                            targetFrameworkVersionElement.Value = TargetVersionToString(targetVersion, appendix);
-                        }
-                        else
-                        {
-                            var targetFrameworksElement = _csproj.Root?.Descendants(ns + "TargetFrameworks").FirstOrDefault();
-                            if (targetFrameworksElement != null)
-                            {
-                                targetFrameworksElement.Value = TargetVersionToString(targetVersion, appendix);
-                            }
-                            else
-                            {
-                                // If no target framework elements are found, add a new one
-                                _csproj.Root?.Add(new XElement(ns + "PropertyGroup",
-                                    new XElement(ns + "TargetFramework", TargetVersionToString(targetVersion, appendix))));
-                            }
-                        }
+                        _csproj.Root.Elements(ns + "PropertyGroup").FirstOrDefault()?.Add(new XElement(ns + "TargetFramework", TargetVersionToString(targetVersion, appendix)));
                     }
 
                     // Remove unnecessary files
@@ -256,7 +136,7 @@ namespace NET_Converter.Data
             });
         }
 
-        public static async void UndoMigration()
+        internal static async void UndoMigration()
         {
             if (string.IsNullOrEmpty(_projectPath))
                 throw new Exception("Project path not set.");
@@ -317,6 +197,56 @@ namespace NET_Converter.Data
             {
                 File.Delete(webConfigPath);
             }
+        }
+
+        internal static async Task CheckNuGetPackagesAsync()
+        {
+            if (string.IsNullOrEmpty(_projectPath) || !File.Exists(_projectPath))
+                throw new ArgumentException("Invalid project path.");
+
+            await Task.Run(async () =>
+            {
+                lock (_csproj)
+                {
+                    _csproj ??= XDocument.Load(_projectPath);
+                }
+
+                var packageReferences = _csproj.Root?.Descendants("PackageReference").ToList();
+                if (packageReferences == null || !packageReferences.Any())
+                {
+                    Console.WriteLine("No NuGet packages found.");
+                    return;
+                }
+
+                foreach (var packageReference in packageReferences)
+                {
+                    var packageName = packageReference.Attribute("Include")?.Value;
+                    var packageVersion = packageReference.Attribute("Version")?.Value;
+
+                    if (!string.IsNullOrEmpty(packageName) && !string.IsNullOrEmpty(packageVersion))
+                    {
+                        var latestVersion = await GetLatestNuGetPackageVersionAsync(packageName);
+                        if (latestVersion != null && latestVersion != packageVersion)
+                        {
+                            Console.WriteLine($"Package '{packageName}' has a newer version available: {latestVersion} (current: {packageVersion})");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Package '{packageName}' is up to date.");
+                        }
+                    }
+                }
+            });
+        }
+
+        private static async Task<string?> GetLatestNuGetPackageVersionAsync(string packageName)
+        {
+            using var httpClient = new HttpClient();
+            var url = $"https://api.nuget.org/v3-flatcontainer/{packageName}/index.json";
+            var response = await httpClient.GetStringAsync(url);
+            using var jsonDoc = JsonDocument.Parse(response);
+            var versions = jsonDoc.RootElement.GetProperty("versions").EnumerateArray().Select(v => v.GetString()).ToArray();
+            return versions.LastOrDefault();
         }
     }
 }
