@@ -31,19 +31,20 @@
         <StackPanel Grid.Row="1">
             <Grid>
                 <TextBlock Text="Project Path:" Margin="5" HorizontalAlignment="Left"/>
-                <TextBox Name="ProjectPathText" Margin="5, 5, 25, 5" Width="550" HorizontalAlignment="Right"/>
+                <TextBox x:Name="ProjectPathText" Margin="5, 5, 25, 5" Width="550" HorizontalAlignment="Right"/>
             </Grid>
             <Grid>
                 <TextBlock Text=".NET Version:" Margin="5" HorizontalAlignment="Left"/>
-                <TextBox Name="NETVersionText" Margin="5, 5, 25, 5" Width="550" HorizontalAlignment="Right"/>
+                <TextBox x:Name="NETVersionText" Margin="5, 5, 25, 5" Width="550" HorizontalAlignment="Right"/>
             </Grid>
             <Grid>
                 <TextBlock Text="Target Framework:" Margin="5" HorizontalAlignment="Left"/>
-                <ComboBox Name="TargetFrameworkCombo" Margin="5, 5, 25, 5" Width="350" HorizontalAlignment="Right" IsEnabled="False"/>
+                <ComboBox x:Name="TargetFrameworkCombo" Margin="5, 5, 225, 5" Width="350" HorizontalAlignment="Right" IsEnabled="False" SelectionChanged="TargetFrameworkCombo_SelectionChanged"/>
+                <Button x:Name="InstallFrameworkButton" Margin="5, 5, 25, 5" Content="Install" Width="100" HorizontalAlignment="Right" Visibility="Collapsed" Click="InstallFrameworkButton_Click"/>
             </Grid>
             <Grid>
                 <TextBlock Text="Appendix:" Margin="5" HorizontalAlignment="Left"/>
-                <ComboBox Name="AppendixCombo" Margin="5, 5, 25, 5" Width="350" HorizontalAlignment="Right" IsEnabled="True"/>
+                <ComboBox Name="AppendixCombo" Margin="5, 5, 225, 5" Width="350" HorizontalAlignment="Right" IsEnabled="True"/>
             </Grid>
         </StackPanel>
 

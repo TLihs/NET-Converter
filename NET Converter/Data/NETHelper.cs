@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,17 +39,27 @@ namespace NET_Converter.Data
             NETCoreApp60
         }
 
-        internal static string[] GetAvailableNETTargetVersions()
+        internal static readonly string[] Appendices = new[]
         {
-            return
-            [
+                "",
+                "windows",
+                "linux",
+                "macos",
+                "android",
+                "ios",
+                "maccatalyst",
+                "tvos",
+                "browser"
+            };
+
+        internal static readonly string[] AvailableNETTargetVersions = new[]
+        {
                 ".NET 5.0",
-                    ".NET 6.0",
-                    ".NET 7.0",
-                    ".NET 8.0",
-                    ".NET 9.0"
-            ];
-        }
+                ".NET 6.0",
+                ".NET 7.0",
+                ".NET 8.0",
+                ".NET 9.0"
+            };
 
         internal static NETSourceVersions ParseSourceVersion(string versionString)
         {
@@ -129,6 +140,90 @@ namespace NET_Converter.Data
             };
 
             return string.IsNullOrEmpty(appendix) ? baseVersion : $"{baseVersion}-{appendix}";
+        }
+
+        public static async Task<string> ExecuteCommandAsync(string command, string arguments)
+        {
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = new Process
+            {
+                StartInfo = processStartInfo
+            };
+
+            process.Start();
+
+            string output = await process.StandardOutput.ReadToEndAsync();
+            string error = await process.StandardError.ReadToEndAsync();
+
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Command '{command} {arguments}' failed with error: {error}");
+            }
+
+            return output;
+        }
+
+        public static async Task<bool> IsDotNetInstalledAsync()
+        {
+            try
+            {
+                string version = await ExecuteCommandAsync("dotnet", "--version");
+                return !string.IsNullOrEmpty(version);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static async Task<string> ListDotNetSdksAsync()
+        {
+            try
+            {
+                return await ExecuteCommandAsync("dotnet", "--list-sdks");
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public static async Task<string> ListDotNetRuntimesAsync()
+        {
+            try
+            {
+                return await ExecuteCommandAsync("dotnet", "--list-runtimes");
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public static List<string> ParseSdkVersions(string sdkList)
+        {
+            var versions = new List<string>();
+            var lines = sdkList.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                var version = line.Split(' ')[0];
+                var majorVersion = version.Split('.')[0];
+                versions.Add($"net{majorVersion}.0");
+            }
+
+            return versions.Distinct().ToList();
         }
     }
 }

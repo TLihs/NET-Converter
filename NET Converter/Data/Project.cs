@@ -6,12 +6,12 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Xml.Linq;
 using static NET_Converter.Data.NETHelper;
+using static NET8ExceptionHandler.ExceptionManagement;
 
 namespace NET_Converter.Data
 {
     internal static class Project
     {
-
         private static string _projectPath;
         private static NETSourceVersions? _sourceFramework;
         private static XDocument _csproj;
@@ -136,7 +136,7 @@ namespace NET_Converter.Data
             });
         }
 
-        internal static async void UndoMigration()
+        internal static async Task UndoMigration()
         {
             if (string.IsNullOrEmpty(_projectPath))
                 throw new Exception("Project path not set.");
@@ -147,19 +147,15 @@ namespace NET_Converter.Data
             await Task.Run(() =>
             {
                 string backupZipPath = _projectPath + ".backup.zip";
-#pragma warning disable CS8600 // Possible null reference argument.
-                string extractPath = Path.GetDirectoryName(_projectPath);
-#pragma warning restore CS8600 // Possible null reference argument.
-
-#pragma warning disable CS8604 // Possible null reference argument.
+                string? extractPath = Path.GetDirectoryName(_projectPath) ?? throw new InvalidOperationException("Invalid project path.");
                 ZipFile.ExtractToDirectory(backupZipPath, extractPath, true);
-#pragma warning restore CS8600 // Possible null reference argument.
             });
         }
 
         private static void AddFileToArchive(ZipArchive archive, string relativeFilePath)
         {
-            string filePath = Path.Combine(Path.GetDirectoryName(_projectPath), relativeFilePath);
+            string? dirPath = Path.GetDirectoryName(_projectPath) ?? throw new InvalidOperationException("Invalid project path.");
+            string filePath = Path.Combine(dirPath, relativeFilePath);
             if (File.Exists(filePath))
             {
                 archive.CreateEntryFromFile(filePath, relativeFilePath);
@@ -172,27 +168,22 @@ namespace NET_Converter.Data
                 throw new InvalidOperationException("Project path not set.");
 
             // Remove App.config if it exists
-#pragma warning disable CS8604 // Possible null reference argument.
-            string appConfigPath = Path.Combine(Path.GetDirectoryName(_projectPath), "App.config");
-#pragma warning restore CS8604 // Possible null reference argument.
+            string directoryPath = Path.GetDirectoryName(_projectPath) ?? throw new InvalidOperationException("Invalid project path.");
+            string appConfigPath = Path.Combine(directoryPath, "App.config");
             if (File.Exists(appConfigPath))
             {
                 File.Delete(appConfigPath);
             }
 
             // Remove AssemblyInfo.cs if it exists
-#pragma warning disable CS8604 // Possible null reference argument.
-            string assemblyInfoPath = Path.Combine(Path.GetDirectoryName(_projectPath), "Properties", "AssemblyInfo.cs");
-#pragma warning restore CS8604 // Possible null reference argument.
+            string assemblyInfoPath = Path.Combine(directoryPath, "Properties", "AssemblyInfo.cs");
             if (File.Exists(assemblyInfoPath))
             {
                 File.Delete(assemblyInfoPath);
             }
 
             // Remove Web.config if it exists
-#pragma warning disable CS8604 // Possible null reference argument.
-            string webConfigPath = Path.Combine(Path.GetDirectoryName(_projectPath), "Web.config");
-#pragma warning restore CS8604 // Possible null reference argument.
+            string webConfigPath = Path.Combine(directoryPath, "Web.config");
             if (File.Exists(webConfigPath))
             {
                 File.Delete(webConfigPath);
